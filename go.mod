@@ -1,4 +1,4 @@
-module github.com/jackc/pgconn
+module github.com/ericreis/pgconn
 
 go 1.12
 

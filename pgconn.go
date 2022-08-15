@@ -599,9 +599,10 @@ func (pgConn *PgConn) PID() uint32 {
 // TxStatus returns the current TxStatus as reported by the server in the ReadyForQuery message.
 //
 // Possible return values:
-//   'I' - idle / not in transaction
-//   'T' - in a transaction
-//   'E' - in a failed transaction
+//
+//	'I' - idle / not in transaction
+//	'T' - in a transaction
+//	'E' - in a failed transaction
 //
 // See https://www.postgresql.org/docs/current/protocol-message-formats.html.
 func (pgConn *PgConn) TxStatus() byte {
@@ -846,7 +847,13 @@ readloop:
 	for {
 		msg, err := pgConn.receiveMessage()
 		if err != nil {
-			pgConn.asyncClose()
+			// Close on anything other than timeout error - everything else is fatal
+			var netErr net.Error
+			isNetErr := errors.As(err, &netErr)
+			if !(isNetErr && netErr.Timeout()) {
+				pgConn.asyncClose()
+			}
+
 			return nil, preferContextOverNetTimeoutError(ctx, err)
 		}
 
